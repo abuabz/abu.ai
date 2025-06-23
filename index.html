@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>abuBot</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #000;
+      color: #f1f1f1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      position: relative;
+      overflow: hidden;
+      padding: 10px;
+    }
+
+    .watermark {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 18vw;
+      font-weight: bold;
+      color: rgba(255, 255, 255, 0.05);
+      z-index: 0;
+      user-select: none;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 1000px;
+      height: 90vh;
+      background-color: #7a7a7a80;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.05);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    #chat-box {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      line-height: 1.5;
+      word-wrap: break-word;
+      font-size: 1rem;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: linear-gradient(to right, #6a6aff, #1c1c3b);
+      color: white;
+      border-bottom-right-radius: 0;
+    }
+
+    .bot {
+      align-self: flex-start;
+      background-color: #1c1c1c;
+      border-bottom-left-radius: 0;
+    }
+
+    .input-area {
+      display: flex;
+      padding: 12px;
+      background-color: #121212;
+      border-top: 1px solid #333;
+      gap: 8px;
+    }
+
+    #user-input {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background-color: #000;
+      color: white;
+      font-size: 16px;
+      outline: none;
+    }
+
+    button {
+      background-color: #6a6aff;
+      color: white;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #4d4de6;
+    }
+
+    pre {
+      background-color: #000;
+      color: #0f0;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      line-height: 1.5;
+    }
+
+    code {
+      color: #0f0;
+    }
+
+    code .comment {
+      color: #ddd;
+      font-style: italic;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background-color: #555;
+      border-radius: 6px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .chat-container {
+        height: 95vh;
+        max-width: 100%;
+        border-radius: 10px;
+      }
+
+      .bubble {
+        font-size: 0.95rem;
+        padding: 10px 14px;
+      }
+
+      .input-area {
+        flex-direction: column;
+        padding: 10px;
+      }
+
+      #user-input {
+        font-size: 15px;
+        margin-right: 0;
+      }
+
+      button {
+        width: 100%;
+        padding: 10px;
+        font-size: 15px;
+      }
+
+      .watermark {
+        font-size: 22vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="watermark">abu.ai</div>
+
+  <div class="chat-container">
+    <div id="chat-box"></div>
+    <div class="input-area">
+      <input type="text" id="user-input" placeholder="Type your message..." />
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const API_KEY = "AIzaSyCABWcLNrmffzxwDqy7E-_5a0P2Wtpv0Ko";
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`;
+
+    async function sendMessage() {
+      const input = document.getElementById("user-input");
+      const message = input.value.trim();
+      if (!message) return;
+
+      appendMessage("user", message);
+      input.value = "";
+
+      const lowerMsg = message.toLowerCase();
+      if (
+        lowerMsg.includes("who made you") ||
+        lowerMsg.includes("whomadeyou") ||
+        lowerMsg.includes("who are you") ||
+        lowerMsg.includes("what is your name") ||
+        lowerMsg.includes("whoare you") ||
+        lowerMsg.includes("who is abu") ||
+        lowerMsg.includes("who is abu.ai") ||
+        lowerMsg.includes("who is abu ai") ||
+        lowerMsg.includes("who is abu dot ai") ||
+        lowerMsg.includes("name") ||
+        lowerMsg.includes("abu")
+      ) {
+        const customReply = "**I am abu.ai**, the largest AI model created by **Abu**.";
+        appendMessage("bot", customReply);
+        return;
+      }
+
+      appendMessage("bot", "Typing...");
+
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: message }] }]
+          })
+        });
+
+        const data = await res.json();
+        const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't understand that.";
+
+        const chatBox = document.getElementById("chat-box");
+        chatBox.lastChild.remove();
+
+        appendMessage("bot", reply);
+      } catch (err) {
+        console.error(err);
+        appendMessage("bot", "Error contacting Gemini API.");
+      }
+    }
+
+    function appendMessage(sender, text) {
+      const chatBox = document.getElementById("chat-box");
+
+      let htmlFormattedText = text
+        .replace(/```([\s\S]*?)```/g, (match, code) => {
+          const escapedCode = escapeHtml(code);
+          const withComments = escapedCode.replace(/(#.*)/g, '<span class="comment">$1</span>');
+          return `<pre><code>${withComments}</code></pre>`;
+        })
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
+
+      const msg = document.createElement("div");
+      msg.className = `bubble ${sender}`;
+      msg.innerHTML = htmlFormattedText;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+    }
+
+    document.getElementById("user-input").addEventListener("keydown", function (e) {
+      if (e.key === "Enter") sendMessage();
+    });
+  </script>
+</body>
+</html>
